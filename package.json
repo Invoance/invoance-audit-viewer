@@ -1,6 +1,6 @@
 {
     "name": "@invoance/audit-viewer",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Embeddable React audit-log viewer for Invoance: signed event table, filters, export, and in-browser Ed25519 tamper verification.",
     "license": "MIT",
     "repository": {
