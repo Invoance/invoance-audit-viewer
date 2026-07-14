@@ -1,0 +1,61 @@
+{
+    "name": "@invoance/audit-viewer",
+    "version": "0.1.0",
+    "description": "Embeddable React audit-log viewer for Invoance: signed event table, filters, export, and in-browser Ed25519 tamper verification.",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Invoance/invoance-audit-viewer.git"
+    },
+    "homepage": "https://www.invoance.com/developers/audit",
+    "keywords": [
+        "audit-log",
+        "audit-trail",
+        "react",
+        "embeddable",
+        "ed25519",
+        "verification",
+        "invoance"
+    ],
+    "type": "module",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        },
+        "./styles.css": "./dist/styles.css"
+    },
+    "files": [
+        "dist"
+    ],
+    "sideEffects": [
+        "*.css"
+    ],
+    "scripts": {
+        "build": "tsup && tailwindcss -c tailwind.config.cjs -i ./src/styles.css -o ./dist/styles.css --minify",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run",
+        "demo": "vite demo --port 5173"
+    },
+    "peerDependencies": {
+        "react": ">=18"
+    },
+    "devDependencies": {
+        "@testing-library/react": "^16.1.0",
+        "@types/node": "^26.1.1",
+        "@types/react": "^18.3.12",
+        "@types/react-dom": "^18.3.1",
+        "jsdom": "^25.0.1",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "tailwindcss": "^3.4.14",
+        "tsup": "^8.3.5",
+        "typescript": "^5.6.3",
+        "vite": "^5.4.10",
+        "vitest": "^2.1.4"
+    }
+}

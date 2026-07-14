@@ -1,0 +1,21 @@
+/* @invoance/audit-viewer stylesheet.
+ *
+ * Utilities are compiled with the `inv-` prefix and no preflight, so nothing
+ * here leaks into or depends on the host app's CSS. Theme by overriding the
+ * --inv-* variables (HSL triples, shadcn-style) on :root or any ancestor of
+ * the viewer.
+ */
+
+:root {
+    --inv-background: 0 0% 100%;
+    --inv-foreground: 240 10% 8%;
+    --inv-border: 240 6% 90%;
+    --inv-muted: 240 4% 95%;
+    --inv-popover: 0 0% 100%;
+    --inv-popover-foreground: 240 10% 8%;
+    --inv-success: 161 94% 30%;
+    --inv-danger: 0 72% 51%;
+    --inv-warning: 32 95% 44%;
+}
+
+@tailwind utilities;
