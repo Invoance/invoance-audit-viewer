@@ -51,9 +51,12 @@ jobs:
           echo "Tag $GITHUB_REF_NAME matches package.json version $PKG"
 
       - run: npm ci
+      # Build BEFORE typecheck: demo/main.tsx imports the built dist/ on
+      # purpose (the demo exercises the shipped artifact), so dist must exist
+      # for tsc to resolve it on a fresh checkout.
+      - run: npm run build
       - run: npm run typecheck
       - run: npm test
-      - run: npm run build
 
       # Use the latest npm so Trusted Publishing OIDC support is reliable.
       # Trusted Publishing requires npm 11.5.1+; setup-node@v4 ships an
