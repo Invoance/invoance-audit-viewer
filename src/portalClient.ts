@@ -27,6 +27,17 @@ export class ExchangeError extends Error {
 
 const inFlight = new Map<string, Promise<string>>();
 
+/** Max automatic retries after a 429; the per-IP exchange limiter rejects
+    BEFORE the token is consumed, so retrying the same token is safe. */
+const MAX_429_RETRIES = 2;
+const MAX_RETRY_WAIT_MS = 5000;
+
+function retryWaitMs(res: Response): number {
+    const header = Number(res.headers.get("retry-after"));
+    const ms = Number.isFinite(header) && header >= 0 ? header * 1000 : 1000;
+    return Math.min(ms, MAX_RETRY_WAIT_MS);
+}
+
 /** Exchange a one-time portal token for the org-scoped session JWT. */
 export function exchangePortalToken(baseUrl: string, token: string): Promise<string> {
     const key = `${portalBase(baseUrl)}|${token}`;
@@ -34,24 +45,40 @@ export function exchangePortalToken(baseUrl: string, token: string): Promise<str
     if (existing) return existing;
 
     const p = (async () => {
-        let res: Response;
-        try {
-            res = await fetch(`${portalBase(baseUrl)}/exchange`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ token }),
-            });
-        } catch {
-            throw new ExchangeError("Could not reach the server. Please try again.", false);
+        for (let attempt = 0; ; attempt++) {
+            let res: Response;
+            try {
+                res = await fetch(`${portalBase(baseUrl)}/exchange`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ token }),
+                });
+            } catch {
+                throw new ExchangeError("Could not reach the server. Please try again.", false);
+            }
+            // Rate-limited (e.g. many colleagues behind one NAT clicking links
+            // in the same second). The link is NOT consumed by a 429, so wait
+            // out Retry-After and try again; past the retry budget, say what
+            // actually happened instead of blaming the link.
+            if (res.status === 429) {
+                if (attempt < MAX_429_RETRIES) {
+                    await new Promise((r) => setTimeout(r, retryWaitMs(res)));
+                    continue;
+                }
+                throw new ExchangeError(
+                    "The server is busy right now. Please try again in a moment; this link is still valid.",
+                    false,
+                );
+            }
+            const b = await res.json().catch(() => null);
+            if (!res.ok || !b?.token) {
+                throw new ExchangeError(
+                    "This portal link is invalid, expired, or already used. Ask for a fresh link.",
+                    true,
+                );
+            }
+            return b.token as string;
         }
-        const b = await res.json().catch(() => null);
-        if (!res.ok || !b?.token) {
-            throw new ExchangeError(
-                "This portal link is invalid, expired, or already used. Ask for a fresh link.",
-                true,
-            );
-        }
-        return b.token as string;
     })();
 
     inFlight.set(key, p);

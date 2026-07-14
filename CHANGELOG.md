@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.2
+
+- Exchange retries automatically on 429 (per-IP rate limit), honoring
+  Retry-After, up to 2 attempts. A rate-limit rejection does not consume the
+  one-time link, so the retry is safe; if the budget is exhausted the error
+  now says the server is busy instead of misreporting the link as invalid or
+  already used.
+
 ## 0.1.1
 
 Initial release.
