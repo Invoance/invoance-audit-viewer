@@ -1,0 +1,78 @@
+# Auto-publish to npm when a tag matching `v*` is pushed.
+#
+# To release:
+#   1. Bump version in package.json
+#   2. Update CHANGELOG.md
+#   3. Commit, push to main
+#   4. Tag and push:
+#        git tag v0.1.1 -m "0.1.1"
+#        git push origin v0.1.1
+#   5. This workflow runs, publishes to npm, creates a GitHub Release.
+#
+# One-time setup (after the FIRST manual publish; OIDC registration needs the
+# package to already exist on npm):
+#   https://www.npmjs.com/package/@invoance/audit-viewer/access
+#     Organization: Invoance
+#     Repository:   invoance-audit-viewer
+#     Workflow:     release.yml
+#   Then enable "Require two-factor authentication and disallow tokens".
+
+name: Release to npm
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write       # to create the GitHub Release
+  id-token: write       # to publish with --provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: https://registry.npmjs.org/
+          cache: npm
+
+      - name: Verify tag matches package.json version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(node -p "require('./package.json').version")
+          if [ "$TAG" != "$PKG" ]; then
+            echo "ERROR: tag $GITHUB_REF_NAME does not match package.json version $PKG" >&2
+            exit 1
+          fi
+          echo "Tag $GITHUB_REF_NAME matches package.json version $PKG"
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+      # Use the latest npm so Trusted Publishing OIDC support is reliable.
+      # Trusted Publishing requires npm 11.5.1+; setup-node@v4 ships an
+      # older npm by default depending on the Node version.
+      - run: npm install -g npm@latest
+
+      - name: Publish to npm with provenance via Trusted Publishing
+        # No NODE_AUTH_TOKEN! OIDC handshake authenticates against the
+        # Trusted Publisher configured for this repo + workflow.
+        run: npm publish --access public --provenance
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          body: |
+            See [CHANGELOG](CHANGELOG.md) for details.
+
+            ```bash
+            npm install @invoance/audit-viewer@${{ github.ref_name }}
+            ```
