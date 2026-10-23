@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.2
+
+- The empty filter bar reads like a search field's placeholder, "Filter by
+  actors, actions, targets and dates", and the whole bar is the button that
+  opens the field menu. With filters set it shows the chips and "Add filter"
+  as before.
+
 ## 0.2.1
 
 - The signed record's editable layer stays aligned with the coloured text

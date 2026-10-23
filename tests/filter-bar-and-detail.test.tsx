@@ -111,7 +111,7 @@ async function click(el: Element) {
 }
 
 async function openField(label: string) {
-    await click(screen.getByRole("button", { name: /Filter events|Add filter/ }));
+    await click(screen.getByRole("button", { name: /Filter by actors, actions, targets and dates|Add filter/ }));
     const item = await screen.findByRole("button", { name: label });
     await click(item);
 }
@@ -251,7 +251,7 @@ describe("filter bar", () => {
         async (mode) => {
             const calls = stubFetch(mode);
             await mount();
-            await click(screen.getByRole("button", { name: "Filter events" }));
+            await click(screen.getByRole("button", { name: "Filter by actors, actions, targets and dates" }));
             // The probe answers, then the field list drops the newer-API fields.
             await waitFor(() => expect(screen.queryByRole("button", { name: "Actor name" })).toBeNull());
             expect(screen.queryByRole("button", { name: "Target" })).toBeNull();
@@ -285,6 +285,25 @@ describe("filter bar", () => {
         await click(screen.getByRole("button", { name: "Clear all" }));
         expect(screen.queryByText("date: Today")).toBeNull();
         await waitFor(() => expect(lastEventsParams(calls).get("occurred_after")).toBeNull());
+    });
+
+    it("the empty bar reads as a placeholder and opens the menu; with a chip it says Add filter", async () => {
+        stubFetch("ok");
+        await mount();
+        const prompt = screen.getByRole("button", { name: "Filter by actors, actions, targets and dates" });
+        expect(screen.queryByRole("button", { name: "Add filter" })).toBeNull();
+        expect(prompt.getAttribute("aria-expanded")).toBe("false");
+
+        await click(prompt);
+        expect(prompt.getAttribute("aria-expanded")).toBe("true");
+        await click(await screen.findByRole("button", { name: "Action" }));
+        await click((await screen.findByText("document.deleted")).closest("button")!);
+
+        expect(screen.queryByRole("button", { name: "Filter by actors, actions, targets and dates" })).toBeNull();
+        expect(screen.getByRole("button", { name: "Add filter" })).toBeTruthy();
+
+        await click(screen.getByRole("button", { name: "Clear all" }));
+        expect(screen.getByRole("button", { name: "Filter by actors, actions, targets and dates" })).toBeTruthy();
     });
 });
 

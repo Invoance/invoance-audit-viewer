@@ -80,6 +80,9 @@ const PLURAL: Record<ValueField, string> = {
     target_id: "target ids",
 };
 
+/** What the bar says while no filter is set; it is also the trigger's name. */
+export const EMPTY_PROMPT = "Filter by actors, actions, targets and dates";
+
 export default function FilterBar({
     chips,
     onChange,
@@ -188,10 +191,22 @@ export default function FilterBar({
                     aria-haspopup="true"
                     aria-expanded={step !== null}
                     onClick={() => setStep(step ? null : { kind: "fields" })}
-                    className={`inv-flex inv-items-center inv-gap-1 inv-px-1.5 inv-py-0.5 inv-text-sm inv-text-foreground/60 hover:inv-bg-muted hover:inv-text-foreground ${FOCUS_RING}`}
+                    className={
+                        chips.length
+                            ? `inv-flex inv-items-center inv-gap-1 inv-px-1.5 inv-py-0.5 inv-text-sm inv-text-foreground/60 hover:inv-bg-muted hover:inv-text-foreground ${FOCUS_RING}`
+                            : // Empty bar: the trigger fills it and reads like a search
+                              // field's placeholder, so the whole bar is one target.
+                              `inv-flex inv-min-w-0 inv-flex-1 inv-items-center inv-self-stretch inv-px-1 inv-text-left inv-text-sm inv-text-foreground/45 hover:inv-text-foreground/70 ${FOCUS_RING}`
+                    }
                 >
-                    <Plus className="inv-h-3.5 inv-w-3.5" />
-                    {chips.length ? "Add filter" : "Filter events"}
+                    {chips.length ? (
+                        <>
+                            <Plus className="inv-h-3.5 inv-w-3.5" />
+                            Add filter
+                        </>
+                    ) : (
+                        <span className="inv-truncate">{EMPTY_PROMPT}</span>
+                    )}
                 </button>
                 {chips.length > 0 && (
                     <button

@@ -87,7 +87,8 @@ return { token: session.token };
 
 ## Filters
 
-One filter bar replaces separate inputs. "Filter events" opens a menu of
+One filter bar replaces separate inputs. Empty, it reads "Filter by actors,
+actions, targets and dates" and the whole bar opens a menu of
 fields: actor name, actor id, action, target (type), target id and date.
 Picking a field lists the values that exist, most used first, with a search
 box that narrows by prefix; picking a value adds a chip such as
