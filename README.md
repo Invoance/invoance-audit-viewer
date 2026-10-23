@@ -82,6 +82,56 @@ return { token: session.token };
 | `theme` | - | CSS-variable overrides, see Theming |
 | `className` | - | Extra class(es) on the root element |
 | `onSessionExpired` | - | Called when the session cannot be renewed |
+| `syncUrl` | `true` | Keep the open event, filters and page in the page URL |
+| `urlParamPrefix` | `""` | Prefix for the viewer's URL params, e.g. `"audit_"` |
+
+## Filters
+
+One filter bar replaces separate inputs. "Filter events" opens a menu of
+fields: actor name, actor id, action, target (type), target id and date.
+Picking a field lists the values that exist, most used first, with a search
+box that narrows by prefix; picking a value adds a chip such as
+`action: document.deleted`.
+
+- Chips on different fields combine with AND. Several action chips mean any
+  of those actions. Every other field holds one value, so a second pick
+  replaces the first.
+- Date offers Today, Last 7, 14 and 30 days (rolling, so Live keeps finding
+  new events) and a custom range of two calendar days.
+- Typing a value that is not in the list offers "Filter by ..." for it.
+- Suggestions come from `GET /v1/audit/portal/facets`. Against an API that
+  predates that endpoint the viewer suggests from the rows already loaded and
+  leaves out actor name and target, which such an API does not filter on.
+
+## Event detail
+
+Clicking a row opens the event inside the component, in place of the list.
+The breadcrumb ("Audit log / <event id>"), Escape or the browser's Back
+returns to the list with the filters and page as they were.
+
+The card shows the actor, the action and event id, the date and time with
+the reader's timezone, the targets, and the location and user agent. Each is
+a button that highlights its lines in the full signed record beside it. The
+record wraps long values instead of scrolling, and you can type into it to
+test tampering (append-only; Reset restores it). Along the bottom, the sealed
+payload hash and the Ed25519 signature, with Verify signature checking both
+in the browser.
+
+## The page URL
+
+With `syncUrl` (the default) the viewer keeps its state in the URL, so a
+reload, a bookmark or Back lands in the same view:
+
+```
+?event=aevt_...&section=date              the open event and highlighted section
+?action=a&action=b&actor_id=u1&date=7d    filters (date: today, 7d, 14d, 30d or 2026-10-01..2026-10-03)
+?page=3&cursor=...&rows=50                the page and rows per page
+```
+
+Opening an event adds a history entry; filters and paging replace the
+current one. Only these params are touched; the host page's own params are
+kept. If your page already uses names such as `action` or `page`, set
+`urlParamPrefix="audit_"`. Set `syncUrl={false}` when your app owns its URL.
 
 ## Theming
 

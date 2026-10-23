@@ -130,28 +130,28 @@ export default function StreamConfig({ fetcher }: { fetcher: AuthedFetch }) {
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                         placeholder="https://example.com/webhooks/audit"
-                        className={`inv-w-full inv-rounded inv-border inv-border-border inv-bg-background inv-px-2 inv-py-1 inv-text-sm inv-text-foreground inv-outline-none focus:inv-outline-none focus:inv-border-foreground/40 sm:inv-w-96`}
+                        className={`inv-w-full inv-border inv-border-border inv-bg-background inv-px-2 inv-py-1 inv-text-sm inv-text-foreground inv-outline-none focus:inv-outline-none focus:inv-border-foreground/40 sm:inv-w-96`}
                     />
                 </label>
                 <button
                     type="submit"
                     disabled={creating || !url.trim()}
-                    className={`inv-rounded-md inv-border inv-border-border inv-px-3 inv-py-1.5 inv-text-sm hover:inv-bg-muted disabled:inv-opacity-50 ${NO_RING}`}
+                    className={`inv-border inv-border-border inv-px-3 inv-py-1.5 inv-text-sm hover:inv-bg-muted disabled:inv-opacity-50 ${NO_RING}`}
                 >
                     {creating ? "Adding…" : "Add stream"}
                 </button>
             </form>
 
             {error && (
-                <div className="inv-mb-4 inv-rounded-md inv-border inv-border-danger/40 inv-px-3 inv-py-2 inv-text-sm inv-text-danger">
+                <div className="inv-mb-4 inv-border inv-border-danger/40 inv-px-3 inv-py-2 inv-text-sm inv-text-danger">
                     {error}
                 </div>
             )}
 
             {newSecret && (
-                <div className="inv-mb-4 inv-rounded-md inv-border inv-border-success/40 inv-bg-success/5 inv-px-3 inv-py-3 inv-text-sm">
+                <div className="inv-mb-4 inv-border inv-border-success/40 inv-bg-success/5 inv-px-3 inv-py-3 inv-text-sm">
                     <div className="inv-mb-1 inv-font-medium">Signing secret (shown once, copy it now)</div>
-                    <code className="inv-block inv-break-all inv-rounded inv-bg-muted/60 inv-px-2 inv-py-1 inv-font-mono inv-text-xs">
+                    <code className="inv-block inv-break-all inv-bg-muted/60 inv-px-2 inv-py-1 inv-font-mono inv-text-xs">
                         {newSecret}
                     </code>
                     <div className="inv-mt-1 inv-text-xs inv-text-foreground/60">
@@ -160,7 +160,7 @@ export default function StreamConfig({ fetcher }: { fetcher: AuthedFetch }) {
                 </div>
             )}
 
-            <div className="inv-overflow-hidden inv-rounded-md inv-border inv-border-border">
+            <div className="inv-overflow-hidden inv-border inv-border-border">
                 <div className="inv-grid inv-grid-cols-[1fr_90px_150px] inv-gap-3 inv-border-b inv-border-border inv-bg-muted/40 inv-px-4 inv-py-2 inv-text-xs inv-font-medium inv-text-foreground/60">
                     <span>Endpoint</span>
                     <span>State</span>
@@ -195,14 +195,14 @@ export default function StreamConfig({ fetcher }: { fetcher: AuthedFetch }) {
                                     <button
                                         onClick={() => test(s.id)}
                                         disabled={busyId === s.id}
-                                        className={`inv-rounded-md inv-border inv-border-border inv-px-2 inv-py-1 inv-text-xs hover:inv-bg-muted disabled:inv-opacity-50 ${NO_RING}`}
+                                        className={`inv-border inv-border-border inv-px-2 inv-py-1 inv-text-xs hover:inv-bg-muted disabled:inv-opacity-50 ${NO_RING}`}
                                     >
                                         Test
                                     </button>
                                     <button
                                         onClick={() => remove(s.id)}
                                         disabled={busyId === s.id}
-                                        className={`inv-rounded-md inv-border inv-border-border inv-px-2 inv-py-1 inv-text-xs inv-text-danger hover:inv-bg-danger/10 disabled:inv-opacity-50 ${NO_RING}`}
+                                        className={`inv-border inv-border-border inv-px-2 inv-py-1 inv-text-xs inv-text-danger hover:inv-bg-danger/10 disabled:inv-opacity-50 ${NO_RING}`}
                                     >
                                         Delete
                                     </button>
@@ -226,7 +226,7 @@ function StateBadge({ state }: { state: string }) {
                 ? "inv-border-danger/40 inv-text-danger"
                 : "inv-border-border inv-text-foreground/60";
     return (
-        <span className={`inv-inline-block inv-rounded inv-border inv-px-1.5 inv-py-0.5 inv-text-xs ${tone}`}>
+        <span className={`inv-inline-block inv-border inv-px-1.5 inv-py-0.5 inv-text-xs ${tone}`}>
             {state}
         </span>
     );

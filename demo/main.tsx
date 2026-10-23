@@ -11,7 +11,9 @@ import { createRoot } from "react-dom/client";
 import { AuditLogViewer } from "../dist/index.js";
 import "../dist/styles.css";
 
-const BACKEND = "http://localhost:33100";
+// ?api=http://localhost:33102 points the demo at another local backend (a
+// worktree build); the viewer keeps params it does not own.
+const BACKEND = new URLSearchParams(window.location.search).get("api") ?? "http://localhost:33100";
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>

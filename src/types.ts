@@ -1,5 +1,5 @@
 export type Actor = { type?: string; id?: string; name?: string } | null;
-export type Target = { type?: string; id?: string };
+export type Target = { type?: string; id?: string; name?: string };
 export type EventContext = { location?: string; user_agent?: string } | null;
 
 export type AuditEvent = {
@@ -62,4 +62,13 @@ export type AuditLogViewerProps = {
     theme?: { variables?: ThemeVariables };
     /** Called when the session expired and could not be refreshed. */
     onSessionExpired?: () => void;
+    /** Keep the open event, its highlighted section, the filters, the page and
+        the rows per page in the page URL, so a reload or the browser's Back
+        returns to the same view. Opening an event adds a history entry.
+        Only the viewer's own params are written; others are kept. Default
+        true; set false when the host page owns its URL. */
+    syncUrl?: boolean;
+    /** Prefix for the viewer's URL params (e.g. "audit_" gives
+        `audit_action=...`), for host pages that use the same names. */
+    urlParamPrefix?: string;
 };

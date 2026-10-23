@@ -18,4 +18,38 @@
     --inv-warning: 32 95% 44%;
 }
 
+/* Native control defaults inside the viewer only (there is no preflight, so
+ * browsers would paint their own grey button face and outset border). :where()
+ * keeps the specificity at zero, so every utility class still wins. */
+:where(.inv-root),
+:where(.inv-root) *,
+:where(.inv-root) ::before,
+:where(.inv-root) ::after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: hsl(var(--inv-border));
+}
+:where(.inv-root) :where(button, input, textarea) {
+    font: inherit;
+    color: inherit;
+}
+:where(.inv-root) :where(button) {
+    margin: 0;
+    padding: 0;
+    border: 0 solid;
+    background: transparent;
+    cursor: pointer;
+}
+:where(.inv-root) :where(button:disabled) {
+    cursor: default;
+}
+:where(.inv-root) :where(h1, h2, p, ol, ul, dl, dd) {
+    margin: 0;
+}
+:where(.inv-root) :where(ol, ul) {
+    padding: 0;
+    list-style: none;
+}
+
 @tailwind utilities;
