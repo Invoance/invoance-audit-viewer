@@ -122,10 +122,10 @@ function colourLine(line: string): ReactNode[] {
     return out;
 }
 
-// Shared by the textarea and the coloured copy beneath it: any difference in
-// font, padding or wrapping would misalign the two.
-const RECORD_TEXT =
-    "inv-m-0 inv-border-0 inv-p-4 inv-font-mono inv-text-xs inv-leading-relaxed inv-tracking-normal inv-whitespace-pre-wrap [word-break:break-all] [tab-size:2]";
+// Shared by the textarea and the coloured copy beneath it. Every metric lives
+// in styles.css (.inv-record-layer), explicit and !important, so host CSS
+// cannot move one layer without the other.
+const RECORD_TEXT = "inv-record-layer";
 
 const SECTION_IDS = Object.keys(SECTION_KEYS) as SectionId[];
 
@@ -375,7 +375,7 @@ export default function EventDetail({
                                 value={jsonText}
                                 onChange={(e) => onEdit(e.target.value)}
                                 spellCheck={false}
-                                className={`${RECORD_TEXT} inv-absolute inv-inset-0 inv-h-full inv-w-full inv-resize-none inv-overflow-hidden inv-bg-transparent inv-text-transparent inv-caret-foreground selection:inv-bg-foreground/20 focus:inv-outline-none`}
+                                className={RECORD_TEXT}
                             />
                         </div>
                     </div>

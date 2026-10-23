@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.1
+
+- The signed record's editable layer stays aligned with the coloured text
+  under host page CSS. In 0.2.0 a host rule such as `textarea { font-size:
+  16px !important }` (iOS zoom prevention, as in the Invoance dashboard) made
+  the transparent textarea larger than the copy beneath it, and a global
+  `::selection { color: white }` made its text visible when selected, so a
+  selection showed a second, offset copy of the record. Both layers now take
+  their whole typography and box model from one rule (`.inv-record-layer`),
+  explicit and `!important` at a specificity bare element rules cannot reach;
+  selecting shows only a background behind the coloured text.
+- The demo has a second page, `host.html`, rendering the viewer under Tailwind
+  preflight plus those dashboard rules.
+
 ## 0.2.0
 
 Redesign of the list and the detail view.

@@ -52,4 +52,73 @@
     list-style: none;
 }
 
+/* The signed record is a transparent textarea over a coloured copy of the
+ * same text (EventDetail.tsx). The two only line up if every metric is
+ * identical, and host pages restyle form controls: the Invoance dashboard has
+ * `textarea { font-size: 16px !important }` (iOS zoom prevention) and a
+ * global `::selection { color: white }`, which in 0.2.0 made the textarea's
+ * text larger than the copy and painted it white when selected. So both
+ * layers get their whole typography and box model here, explicitly and with
+ * !important, at a specificity no bare element rule can match. */
+.inv-root .inv-record-layer {
+    box-sizing: border-box !important;
+    display: block !important;
+    margin: 0 !important;
+    padding: 16px !important;
+    border: 0 solid transparent !important;
+    border-radius: 0 !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    font-style: normal !important;
+    font-stretch: normal !important;
+    font-variant: normal !important;
+    font-variant-ligatures: none !important;
+    font-feature-settings: normal !important;
+    font-variation-settings: normal !important;
+    font-kerning: none !important;
+    font-synthesis: none !important;
+    line-height: 19.5px !important;
+    letter-spacing: 0 !important;
+    word-spacing: 0 !important;
+    text-indent: 0 !important;
+    text-transform: none !important;
+    text-align: left !important;
+    text-rendering: auto !important;
+    tab-size: 2 !important;
+    -moz-tab-size: 2 !important;
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+    overflow-wrap: anywhere !important;
+    -webkit-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+}
+.inv-root textarea.inv-record-layer {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    resize: none !important;
+    overflow: hidden !important;
+    appearance: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    caret-color: hsl(var(--inv-foreground)) !important;
+}
+/* Selecting in the textarea shows only a background; the coloured text
+ * beneath stays the visible text. */
+.inv-root textarea.inv-record-layer::selection {
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    background: hsl(var(--inv-foreground) / 0.18) !important;
+}
+.inv-root textarea.inv-record-layer::-moz-selection {
+    color: transparent !important;
+    background: hsl(var(--inv-foreground) / 0.18) !important;
+}
+
 @tailwind utilities;

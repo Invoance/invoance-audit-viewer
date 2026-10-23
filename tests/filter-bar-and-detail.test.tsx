@@ -392,9 +392,9 @@ describe("detail view", () => {
         await mount();
         await click(screen.getByText("lead.updated").closest("button")!);
         const record = screen.getByRole("textbox", { name: "Signed record as JSON" });
-        expect(record.className).toContain("inv-overflow-hidden");
-        expect(record.className).toContain("inv-whitespace-pre-wrap");
-        expect(record.className).toContain("inv-absolute");
+        // Overflow, wrapping and position come from the .inv-record-layer rule
+        // (see record-overlay-host-css.test.tsx).
+        expect(record.classList.contains("inv-record-layer")).toBe(true);
         // The coloured copy underneath holds every line, so it sets the height.
         const copyLines = document.querySelectorAll("pre [data-line]");
         expect(copyLines.length).toBe((record as HTMLTextAreaElement).value.split("\n").length);

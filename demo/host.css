@@ -1,0 +1,66 @@
+/* A hostile host page for the demo (host.html): Tailwind v3 preflight's rules
+ * for text and form controls, plus the global rules of the Invoance dashboard
+ * (webs/backend/app/globals.css) that broke the 0.2.0 record overlay. The
+ * viewer must render the same here as on the bare demo page. */
+
+/* Tailwind preflight (v3), the parts that touch text and controls */
+*,
+::before,
+::after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+}
+html {
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    tab-size: 4;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+}
+body {
+    margin: 0;
+    line-height: inherit;
+}
+code,
+kbd,
+samp,
+pre {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 1em;
+}
+button,
+input,
+optgroup,
+select,
+textarea {
+    font-family: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    font-size: 100%;
+    font-weight: inherit;
+    line-height: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    margin: 0;
+    padding: 0;
+}
+textarea {
+    resize: vertical;
+}
+
+/* Dashboard globals, verbatim */
+body {
+    font-size: 17px;
+    line-height: 1.6;
+}
+/* Prevent iOS Safari zoom */
+input,
+textarea,
+select {
+    font-size: 16px !important;
+}
+/* Selection — subtle, neutral */
+body ::selection {
+    background-color: hsl(221 83% 53% / 0.25);
+    color: white;
+}

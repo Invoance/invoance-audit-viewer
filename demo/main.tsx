@@ -4,6 +4,9 @@
 //
 // Run: npm run demo
 // Open: http://localhost:5173/?token=<one-time portal token>
+//   or: http://localhost:5173/host.html?token=... for the same viewer under a
+//       hostile host stylesheet (host.css: Tailwind preflight plus the
+//       dashboard's global textarea and ::selection rules)
 // (mint one: POST /v1/audit/portal_sessions with your API key)
 
 import { StrictMode } from "react";
