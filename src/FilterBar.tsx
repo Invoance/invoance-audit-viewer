@@ -237,6 +237,7 @@ export default function FilterBar({
                             range={range}
                             facetsSupport={facetsSupport}
                             onFacetsSupport={onFacetsSupport}
+                            chosen={chips.flatMap((c) => (c.field === step.field ? [c.value] : []))}
                             onBack={() => setStep({ kind: "fields" })}
                             onPick={(value, label) => pick({ field: step.field, value, label })}
                         />
@@ -339,6 +340,7 @@ function ValuePicker({
     range,
     facetsSupport,
     onFacetsSupport,
+    chosen,
     onBack,
     onPick,
 }: {
@@ -348,6 +350,8 @@ function ValuePicker({
     range: Record<string, string>;
     facetsSupport: FacetsSupport;
     onFacetsSupport: (s: FacetsSupport) => void;
+    /** Values already added as chips for this field: not offered again. */
+    chosen: string[];
     onBack: () => void;
     onPick: (value: string, label: string | null) => void;
 }) {
@@ -387,7 +391,9 @@ function ValuePicker({
     }, [field, q]);
 
     const typed = q.trim();
-    const exact = values?.some((v) => v.value === typed);
+    const shown = values?.filter((v) => !chosen.includes(v.value)) ?? null;
+    const alreadyAdded = typed !== "" && chosen.includes(typed);
+    const exact = alreadyAdded || shown?.some((v) => v.value === typed);
     const plural = PLURAL[field];
 
     return (
@@ -406,7 +412,7 @@ function ValuePicker({
                             onBack();
                         } else if (e.key === "Enter") {
                             e.preventDefault();
-                            const first = values?.[0];
+                            const first = shown?.[0];
                             if (typed && !exact) onPick(typed, null);
                             else if (first) onPick(first.value, first.label);
                         } else moveFocus(e);
@@ -417,11 +423,11 @@ function ValuePicker({
                 />
             </div>
             <div role="group" aria-label={`${FIELD_LABELS[field]} values`} className="inv-max-h-64 inv-overflow-y-auto inv-py-1">
-                {values === null ? (
+                {shown === null ? (
                     <div className="inv-px-3 inv-py-2 inv-text-sm inv-text-foreground/50">Loading…</div>
                 ) : (
                     <>
-                        {values.map((v) => (
+                        {shown.map((v) => (
                             <OptionButton key={v.value} onClick={() => onPick(v.value, v.label)}>
                                 <span className="inv-min-w-0 inv-flex-1">
                                     <span
@@ -447,8 +453,21 @@ function ValuePicker({
                                 </span>
                             </OptionButton>
                         )}
-                        {values.length === 0 && !typed && (
-                            <div className="inv-px-3 inv-py-2 inv-text-sm inv-text-foreground/50">No values yet.</div>
+                        {alreadyAdded && (
+                            <div className="inv-px-3 inv-py-2 inv-text-sm inv-text-foreground/50">
+                                <span className="inv-font-mono inv-text-[13px]">{typed}</span> is already a filter.
+                            </div>
+                        )}
+                        {shown.length === 0 && !typed && (
+                            <div className="inv-px-3 inv-py-2 inv-text-sm inv-text-foreground/50">
+                                {chosen.length === 0
+                                    ? "No values yet."
+                                    : facetsSupport === "no"
+                                      ? // Without facets the suggestions are the rows on screen,
+                                        // which this field's own chips have already narrowed.
+                                        `No other ${plural} on this page. Type one to add it.`
+                                      : `No other ${plural} to add.`}
+                            </div>
                         )}
                     </>
                 )}

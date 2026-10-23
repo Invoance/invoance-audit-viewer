@@ -170,7 +170,36 @@ describe("filter bar", () => {
         );
     });
 
-    it("passes the typed prefix and the date chip's range to facets", async () => {
+    it("does not suggest a value that is already a filter", async () => {
+        const calls = stubFetch("ok");
+        await mount();
+        await openField("Action");
+        await click((await screen.findByText("document.deleted")).closest("button")!);
+        await waitFor(() => expect(lastEventsParams(calls).get("actions")).toBe("document.deleted"));
+
+        await openField("Action");
+        const group = await screen.findByRole("group", { name: "Action values" });
+        await waitFor(() => expect(within(group).getByText("user.signed_in")).toBeTruthy());
+        expect(within(group).queryByText("document.deleted")).toBeNull();
+
+        // Typing it shows that it is already there, with no "Filter by" offer.
+        const input = screen.getByRole("textbox", { name: "Search actions" });
+        await act(async () => {
+            fireEvent.change(input, { target: { value: "document.deleted" } });
+        });
+        await waitFor(() => expect(within(group).getByText(/is already a filter/)).toBeTruthy());
+        expect(within(group).queryByText(/Filter by/)).toBeNull();
+
+        // With the last value taken, the picker says there is nothing left.
+        await act(async () => {
+            fireEvent.change(input, { target: { value: "" } });
+        });
+        await click((await within(group).findByText("user.signed_in")).closest("button")!);
+        await openField("Action");
+        expect(await screen.findByText("No other actions to add.")).toBeTruthy();
+    });
+
+        it("passes the typed prefix and the date chip's range to facets", async () => {
         const calls = stubFetch("ok");
         await mount();
         await openField("Date");
