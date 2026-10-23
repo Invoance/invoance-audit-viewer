@@ -55,8 +55,16 @@ return { token: session.token };
 - The exchanged JWT is org-scoped: it can only ever read the one organization
   the session was minted for.
 - `tokenFromUrl` enables the hosted-page style instead: the component reads a
-  one-time `?token=` from the URL, exchanges it, and strips it. Combine with
-  `persistSession` to survive page refreshes via sessionStorage.
+  one-time `?token=` from the URL, shows an "Open audit log" button, and
+  exchanges the token only when the visitor clicks it, then strips it from the
+  URL. Links are single-use, and mail scanners (Microsoft Defender Safe Links
+  and similar) render pages on delivery; exchanging on load would burn the
+  link before the person arrives. Loading the page posts nothing. Combine with
+  `persistSession` to survive page refreshes via sessionStorage: a refresh
+  after opening reuses the stored session without the button.
+- `confirmBeforeOpen={false}` restores the exchange on page load for
+  `tokenFromUrl`, for links that are never sent by email. The
+  `getPortalToken` path is always automatic; the button never shows there.
 - A session minted with `intent: "log_streams"` renders the stream-destination
   config screen instead of the event viewer.
 
@@ -66,6 +74,7 @@ return { token: session.token };
 |---|---|---|
 | `getPortalToken` | - | Async callback returning a fresh one-time portal token |
 | `tokenFromUrl` | `false` | Read and strip `?token=` from the page URL |
+| `confirmBeforeOpen` | `true` | With `tokenFromUrl`, exchange the token only after an "Open audit log" click |
 | `persistSession` | `false` | Cache the session JWT in sessionStorage |
 | `baseUrl` | `https://api.invoance.com` | API origin (point at your dev backend) |
 | `pageSize` | `25` | Initial rows per page (25, 50, or 100) |

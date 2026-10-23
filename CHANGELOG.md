@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.3
+
+- `tokenFromUrl` links now open on a click. The viewer shows an "Open audit
+  log" button and exchanges the one-time `?token=` only when the visitor
+  clicks it; loading the page posts nothing. Mail scanners that render links
+  on delivery (Microsoft Defender Safe Links and similar) no longer burn the
+  link before the person arrives. A refresh after opening still reuses the
+  stored session (`persistSession`) without the button.
+- New prop `confirmBeforeOpen` (default `true`); set it to `false` to exchange
+  on load as before. The `getPortalToken` callback path is unchanged and
+  stays automatic.
+
 ## 0.1.2
 
 - Exchange retries automatically on 429 (per-IP rate limit), honoring

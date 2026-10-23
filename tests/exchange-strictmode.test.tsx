@@ -4,6 +4,10 @@
 // exchange endpoint consumes its one-time token server-side, so a double-mount
 // must issue exactly ONE /exchange call; the module-level in-flight dedup in
 // portalClient is what guarantees that.
+//
+// This runs the auto-exchange path (confirmBeforeOpen={false}), where the
+// exchange happens in the mount effect; the click path is in
+// confirm-before-open.test.tsx.
 
 import { StrictMode } from "react";
 import { act } from "react";
@@ -65,7 +69,7 @@ describe("StrictMode-safe exchange", () => {
         await act(async () => {
             root.render(
                 <StrictMode>
-                    <AuditLogViewer tokenFromUrl baseUrl="http://api.test" />
+                    <AuditLogViewer tokenFromUrl confirmBeforeOpen={false} baseUrl="http://api.test" />
                 </StrictMode>,
             );
         });

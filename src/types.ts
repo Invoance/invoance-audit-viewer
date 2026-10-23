@@ -36,8 +36,15 @@ export type AuditLogViewerProps = {
         session expires. The Stripe fetchClientSecret pattern. */
     getPortalToken?: () => Promise<string>;
     /** Read the one-time token from the page URL's `?token=` (hosted-page
-        style). The token is exchanged then stripped from the URL. Default false. */
+        style). The token is exchanged (after the visitor's click, see
+        `confirmBeforeOpen`) then stripped from the URL. Default false. */
     tokenFromUrl?: boolean;
+    /** With `tokenFromUrl`, wait for the visitor to click "Open audit log"
+        before exchanging the URL token. Links are single-use, and mail
+        scanners that render the page would otherwise burn them before the
+        person arrives. Default true; set false to exchange on load. Has no
+        effect on the `getPortalToken` path, which always exchanges itself. */
+    confirmBeforeOpen?: boolean;
     /** Cache the session JWT in sessionStorage so a page refresh survives
         without a fresh token. Default false; the hosted page turns it on. */
     persistSession?: boolean;

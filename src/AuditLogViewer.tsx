@@ -12,8 +12,11 @@
 //   cursor stack (we remember the cursor that loaded each page).
 // - On 401 the session silently re-mints through getPortalToken when provided;
 //   otherwise the expiry message asks for a fresh link.
+// - A ?token= link waits for an "Open audit log" click before the exchange
+//   (confirmBeforeOpen): links are single-use, and anything that renders the
+//   page on load, such as a mail scanner, would otherwise burn it.
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, X } from "./icons";
 import { verifyAuditEventDetail } from "./auditVerify";
 import { DEFAULT_BASE_URL, exchangePortalToken, portalBase } from "./portalClient";
@@ -148,6 +151,7 @@ function Centered({ children }: { children: ReactNode }) {
 export default function AuditLogViewer({
     getPortalToken,
     tokenFromUrl = false,
+    confirmBeforeOpen = true,
     persistSession = false,
     baseUrl = DEFAULT_BASE_URL,
     pageSize: initialPageSize = 25,
@@ -157,7 +161,10 @@ export default function AuditLogViewer({
     onSessionExpired,
 }: AuditLogViewerProps) {
     const [jwt, setJwt] = useState<string | null>(null);
-    const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+    const [status, setStatus] = useState<"loading" | "confirm" | "ready" | "error">("loading");
+    // The URL token waiting for the visitor's click (confirmBeforeOpen).
+    const [pendingToken, setPendingToken] = useState<string | null>(null);
+    const openTitleId = useId();
     const [error, setError] = useState<string>("");
     const [events, setEvents] = useState<AuditEvent[]>([]);
     const [loading, setLoading] = useState(false);
@@ -256,25 +263,39 @@ export default function AuditLogViewer({
         [base, refreshJwt, expire],
     );
 
+    // Exchange a one-time URL token, strip it, and start the session.
+    const openUrlToken = useCallback(
+        async (token: string, isCancelled: () => boolean = () => false) => {
+            try {
+                const j = await exchangePortalToken(baseUrl, token);
+                stripTokenFromUrl();
+                if (!isCancelled()) storeJwt(j);
+            } catch (e) {
+                if (!isCancelled()) {
+                    setStatus("error");
+                    setError(e instanceof Error ? e.message : "Could not start the session.");
+                }
+            }
+        },
+        [baseUrl, storeJwt],
+    );
+
     // 1) Obtain the portal JWT. Order: a fresh ?token= (when tokenFromUrl)
     //    always wins, then a stored session (when persistSession), then the
-    //    getPortalToken callback.
+    //    getPortalToken callback. With confirmBeforeOpen the URL token waits
+    //    for the click instead of being exchanged here.
     useEffect(() => {
         let cancelled = false;
         (async () => {
             if (tokenFromUrl) {
                 const token = new URLSearchParams(window.location.search).get("token");
                 if (token) {
-                    try {
-                        const j = await exchangePortalToken(baseUrl, token);
-                        stripTokenFromUrl();
-                        if (!cancelled) storeJwt(j);
-                    } catch (e) {
-                        if (!cancelled) {
-                            setStatus("error");
-                            setError(e instanceof Error ? e.message : "Could not start the session.");
-                        }
+                    if (confirmBeforeOpen) {
+                        setPendingToken(token);
+                        setStatus("confirm");
+                        return;
                     }
+                    await openUrlToken(token, () => cancelled);
                     return;
                 }
             }
@@ -505,6 +526,32 @@ export default function AuditLogViewer({
     );
 
     if (status === "loading") return root(<Centered>Loading your audit log…</Centered>);
+    if (status === "confirm" && pendingToken) {
+        return root(
+            <section
+                aria-labelledby={openTitleId}
+                className="inv-mx-auto inv-flex inv-max-w-md inv-flex-col inv-items-center inv-gap-3 inv-py-16 inv-text-center"
+            >
+                <h1 id={openTitleId} className="inv-text-xl inv-font-semibold inv-tracking-tight">
+                    Audit log
+                </h1>
+                <p className="inv-text-sm inv-text-foreground/70">
+                    This link opens a read-only view of the audit log. It works once, so open it when you are
+                    ready.
+                </p>
+                <button
+                    type="button"
+                    onClick={() => {
+                        setStatus("loading");
+                        void openUrlToken(pendingToken);
+                    }}
+                    className="inv-mt-2 inv-rounded-md inv-border inv-border-foreground inv-bg-foreground inv-px-4 inv-py-2 inv-text-sm inv-font-medium inv-text-background hover:inv-bg-foreground/90 focus:inv-outline-none focus-visible:inv-outline focus-visible:inv-outline-2 focus-visible:inv-outline-offset-2 focus-visible:inv-outline-foreground/40"
+                >
+                    Open audit log
+                </button>
+            </section>,
+        );
+    }
     if (status === "error") return root(<Centered>{error}</Centered>);
 
     return root(
