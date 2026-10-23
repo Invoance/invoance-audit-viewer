@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.3.0
+
+- The filter bar is a public export, so a host page can put the same chip
+  filters on its own audit-log list: `import { FilterBar, chipsToParams }
+  from "@invoance/audit-viewer"`. It is controlled (`chips` and `onChange`)
+  and takes its data source as a prop: `fetchFacets(params)` requests your
+  facets endpoint and returns the Response. `chipsToParams(chips)` gives the
+  list query the viewer sends (`actions`, `actor_name`, `actor_id`,
+  `target_type`, `target_id`, `occurred_after`, `occurred_before`). Optional
+  `events` are the fallback suggestions when the endpoint answers 404, and
+  `facetsSupport` / `onFacetsSupport` let the host remember that across
+  remounts. Also exported: `addChip`, `removeChip`, `chipText`, `dateRange`,
+  `EMPTY_PROMPT` and the chip, facet and prop types.
+- The bar carries its own `inv-root` scope, so it renders as designed
+  outside the viewer; theme it with the same `--inv-*` variables.
+- The hosted viewer is unchanged: it passes the portal facets endpoint to the
+  same component.
+
 ## 0.2.2
 
 - The empty filter bar reads like a search field's placeholder, "Filter by

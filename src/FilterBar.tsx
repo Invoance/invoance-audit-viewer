@@ -1,18 +1,21 @@
 // The single filter bar: chips for the active filters, and one "Add filter"
-// popover that walks field -> value. Values come from the portal facets
-// endpoint (existing values, most used first, narrowed by a typed prefix). On
-// an API without that endpoint (404) the suggestions come from the rows
-// already loaded, and the actor-name and target-type fields are hidden since
-// such an API does not filter on them either.
+// popover that walks field -> value. Values come from a facets endpoint
+// (existing values, most used first, narrowed by a typed prefix): the portal's
+// inside the viewer, or whatever `fetchFacets` calls when a host page renders
+// the bar on its own (a public export since 0.3.0). On an API without that
+// endpoint (404) the suggestions come from the rows already loaded, and the
+// actor-name and target-type fields are hidden since such an API does not
+// filter on them either.
 //
 // Keyboard: the trigger opens the menu; arrows move between rows; Enter picks;
 // Backspace in an empty search goes back to the field list; Escape closes and
 // returns focus to the trigger.
 
-import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { Calendar, ChevronLeft, ChevronRight, ListFilter, Plus, Search, X } from "./icons";
 import {
     addChip,
+    chipsToParams,
     chipText,
     DATE_PRESETS,
     facetsFromEvents,
@@ -21,11 +24,11 @@ import {
     NEWER_API_FIELDS,
     type Chip,
     type DateChip,
+    type FacetSourceEvent,
     type FacetValue,
     type FilterField,
     type ValueField,
 } from "./filters";
-import type { AuditEvent, AuthedFetch } from "./types";
 import { FOCUS_RING, INPUT_FOCUS, OPTION_FOCUS } from "./ui";
 
 export type FacetsSupport = "unknown" | "yes" | "no";
@@ -39,9 +42,33 @@ export type FacetsResult =
     /** Any other failure (5xx, bad body): suggest from loaded rows this time. */
     | { kind: "failed" };
 
-/** GET /facets for one field. `range` carries the date chip's occurred_* params. */
+/** Requests one facets page: GET your facets endpoint with these query params
+    (`field` and `limit`, plus `q`, `occurred_after` and `occurred_before` when
+    set) and resolve to its Response, or null when there is none to give (the
+    session expired, say). The bar reads `{ values: [{ value, label, count }] }`
+    from a 2xx; a 404 or a thrown request means the API has no facets. */
+export type FacetsFetcher = (params: URLSearchParams) => Promise<Response | null>;
+
+export type FilterBarProps = {
+    /** The active filters. The bar is controlled: it never changes them itself. */
+    chips: Chip[];
+    /** Called with the new chips when one is added or removed. */
+    onChange: (chips: Chip[]) => void;
+    /** Where value suggestions come from. */
+    fetchFacets: FacetsFetcher;
+    /** Rows on screen: the suggestion source when facets is unavailable. */
+    events?: FacetSourceEvent[];
+    /** Whether the API has facets, if the host keeps it across remounts.
+        Omit both to let the bar find out and remember it itself. */
+    facetsSupport?: FacetsSupport;
+    onFacetsSupport?: (s: FacetsSupport) => void;
+    /** Extra class(es) for the bar's root. */
+    className?: string;
+};
+
+/** One facets call for a field. `range` carries the date chip's occurred_* params. */
 export async function loadFacets(
-    fetcher: AuthedFetch,
+    fetchFacets: FacetsFetcher,
     field: ValueField,
     q: string,
     range: Record<string, string>,
@@ -52,7 +79,7 @@ export async function loadFacets(
     if (range.occurred_after) qs.set("occurred_after", range.occurred_after);
     if (range.occurred_before) qs.set("occurred_before", range.occurred_before);
     try {
-        const res = await fetcher(`/facets?${qs.toString()}`);
+        const res = await fetchFacets(qs);
         if (!res) return { kind: "failed" };
         if (res.status === 404) return { kind: "unsupported" };
         if (!res.ok) return { kind: "failed" };
@@ -63,9 +90,9 @@ export async function loadFacets(
             values: (b.values as FacetValue[]).filter((v) => v && typeof v.value === "string"),
         };
     } catch {
-        // The list endpoint on the same origin is working (we are past the
-        // exchange), so a thrown request here is the blocked preflight of an
-        // older API, not a dead network.
+        // The list endpoint on the same origin is working (in the viewer we are
+        // past the exchange), so a thrown request here is the blocked preflight
+        // of an older API, not a dead network.
         return { kind: "unsupported" };
     }
 }
@@ -83,26 +110,27 @@ const PLURAL: Record<ValueField, string> = {
 /** What the bar says while no filter is set; it is also the trigger's name. */
 export const EMPTY_PROMPT = "Filter by actors, actions, targets and dates";
 
+const NO_EVENTS: FacetSourceEvent[] = [];
+
 export default function FilterBar({
     chips,
     onChange,
-    fetcher,
-    events,
-    range,
-    facetsSupport,
-    onFacetsSupport,
-}: {
-    chips: Chip[];
-    onChange: (chips: Chip[]) => void;
-    fetcher: AuthedFetch;
-    /** Rows on screen: the suggestion source when facets is unavailable. */
-    events: AuditEvent[];
-    /** occurred_after / occurred_before of the date chip, for the facets call. */
-    range: Record<string, string>;
-    facetsSupport: FacetsSupport;
-    onFacetsSupport: (s: FacetsSupport) => void;
-}) {
+    fetchFacets,
+    events = NO_EVENTS,
+    facetsSupport: supportProp,
+    onFacetsSupport: onSupportProp,
+    className,
+}: FilterBarProps) {
     const [step, setStep] = useState<Step | null>(null);
+    const [ownSupport, setOwnSupport] = useState<FacetsSupport>("unknown");
+    const facetsSupport = supportProp ?? ownSupport;
+    const onFacetsSupport = (s: FacetsSupport) => {
+        setOwnSupport(s);
+        onSupportProp?.(s);
+    };
+    // occurred_after / occurred_before of the date chip, so the suggestions
+    // cover the same window as the list.
+    const range = useMemo(() => chipsToParams(chips.filter((c) => c.field === "date")), [chips]);
     const rootRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -125,7 +153,7 @@ export default function FilterBar({
     useEffect(() => {
         if (!step || facetsSupport !== "unknown") return;
         let cancelled = false;
-        void loadFacets(fetcher, "action", "", range, 1).then((r) => {
+        void loadFacets(fetchFacets, "action", "", range, 1).then((r) => {
             if (cancelled) return;
             if (r.kind === "ok") onFacetsSupport("yes");
             else if (r.kind === "unsupported") onFacetsSupport("no");
@@ -154,7 +182,11 @@ export default function FilterBar({
     );
 
     return (
-        <div ref={rootRef} className="inv-relative inv-min-w-0 inv-flex-1">
+        // inv-root: the scoped control reset, for a bar rendered outside the viewer.
+        <div
+            ref={rootRef}
+            className={`inv-root inv-relative inv-min-w-0 inv-flex-1 inv-text-foreground${className ? ` ${className}` : ""}`}
+        >
             <div
                 className="inv-flex inv-min-h-[36px] inv-cursor-text inv-flex-wrap inv-items-center inv-gap-1.5 inv-border inv-border-border inv-bg-background inv-px-2 inv-py-1"
                 role="group"
@@ -247,7 +279,7 @@ export default function FilterBar({
                     {step.kind === "values" && (
                         <ValuePicker
                             field={step.field}
-                            fetcher={fetcher}
+                            fetchFacets={fetchFacets}
                             events={events}
                             range={range}
                             facetsSupport={facetsSupport}
@@ -350,7 +382,7 @@ function PanelHeader({ title, onBack }: { title: string; onBack: () => void }) {
 
 function ValuePicker({
     field,
-    fetcher,
+    fetchFacets,
     events,
     range,
     facetsSupport,
@@ -360,8 +392,8 @@ function ValuePicker({
     onPick,
 }: {
     field: ValueField;
-    fetcher: AuthedFetch;
-    events: AuditEvent[];
+    fetchFacets: FacetsFetcher;
+    events: FacetSourceEvent[];
     range: Record<string, string>;
     facetsSupport: FacetsSupport;
     onFacetsSupport: (s: FacetsSupport) => void;
@@ -385,7 +417,7 @@ function ValuePicker({
         const t = setTimeout(
             async () => {
                 if (facetsSupport !== "no") {
-                    const r = await loadFacets(fetcher, field, q, range);
+                    const r = await loadFacets(fetchFacets, field, q, range);
                     if (cancelled) return;
                     if (r.kind === "ok") {
                         if (facetsSupport !== "yes") onFacetsSupport("yes");

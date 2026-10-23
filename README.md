@@ -104,6 +104,41 @@ box that narrows by prefix; picking a value adds a chip such as
   predates that endpoint the viewer suggests from the rows already loaded and
   leaves out actor name and target, which such an API does not filter on.
 
+### The filter bar on its own page
+
+The bar is exported for host pages that list audit events themselves (the
+Invoance dashboard does). It does not talk to the portal: you hold the chips,
+and you give it the request for value suggestions.
+
+```tsx
+import { FilterBar, chipsToParams, type Chip } from "@invoance/audit-viewer";
+import "@invoance/audit-viewer/styles.css";
+
+const [chips, setChips] = useState<Chip[]>([]);
+
+<FilterBar
+    chips={chips}
+    onChange={setChips}
+    fetchFacets={(params) => fetch(`/api/audit/facets?${params}`, { credentials: "include" })}
+    events={rows}
+/>;
+
+// Your list query, mapped exactly as the viewer maps it:
+const qs = new URLSearchParams(chipsToParams(chips));
+```
+
+| Prop | What it does |
+|---|---|
+| `chips`, `onChange` | The active filters; the bar only proposes changes |
+| `fetchFacets` | `(params: URLSearchParams) => Promise<Response \| null>`: request your facets endpoint with `field`, `limit` and, when set, `q`, `occurred_after`, `occurred_before`; it should answer `{ values: [{ value, label, count }] }` |
+| `events` | Rows on screen, the suggestion source when `fetchFacets` answers 404 or throws |
+| `facetsSupport`, `onFacetsSupport` | Optional: keep what the bar learned about facets across remounts |
+| `className` | Extra class(es) on the bar's root |
+
+The facets endpoint should behave like `GET /v1/audit/portal/facets` (most
+used first, `q` a case-insensitive prefix, a 90-day window by default), and
+the list should accept the params `chipsToParams` produces.
+
 ## Event detail
 
 Clicking a row opens the event inside the component, in place of the list.

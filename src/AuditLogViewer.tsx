@@ -33,7 +33,7 @@ import {
     type RefObject,
 } from "react";
 import EventDetail from "./EventDetail";
-import FilterBar, { type FacetsSupport } from "./FilterBar";
+import FilterBar, { type FacetsFetcher, type FacetsSupport } from "./FilterBar";
 import { actorPrimary, fmtClock, fmtDate, targetName } from "./format";
 import { Box, Check, ChevronDown, ChevronRight } from "./icons";
 import { chipsToParams, type Chip } from "./filters";
@@ -405,8 +405,8 @@ export default function AuditLogViewer({
         [chips],
     );
 
-    // The date chip's range, for scoping the facets suggestions.
-    const dateParams = useMemo(() => chipsToParams(chips.filter((c) => c.field === "date")), [chips]);
+    // The bar asks the portal facets endpoint for its value suggestions.
+    const fetchFacets = useCallback<FacetsFetcher>((qs) => authedFetch(`/facets?${qs.toString()}`), [authedFetch]);
 
     // The URL for the current state; the write effect below keeps it in step.
     const currentUrl = (event: string | null, sec: string | null) =>
@@ -727,9 +727,8 @@ export default function AuditLogViewer({
                         <FilterBar
                             chips={chips}
                             onChange={setChips}
-                            fetcher={authedFetch}
+                            fetchFacets={fetchFacets}
                             events={events}
-                            range={dateParams}
                             facetsSupport={facetsSupport}
                             onFacetsSupport={setFacetsSupport}
                         />

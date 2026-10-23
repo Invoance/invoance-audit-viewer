@@ -1,6 +1,6 @@
 // Filter chips: the model behind the single filter bar, and its mapping to the
-// portal list query. Pure functions only, so the mapping is testable without
-// rendering anything.
+// list query (the portal's, or a host page's list with the same params). Pure
+// functions only, so the mapping is testable without rendering anything.
 //
 // - Chips on different fields combine with AND (each is its own query param).
 // - Several action chips mean ANY of those actions (`actions` is a comma list).
@@ -11,6 +11,9 @@
 //   ends, from the start of the first day to the end of the last (local time).
 
 import type { AuditEvent } from "./types";
+
+/** The parts of an event the fallback suggestions read. */
+export type FacetSourceEvent = Partial<Pick<AuditEvent, "action" | "actor" | "targets">>;
 
 export type ValueField = "action" | "actor_name" | "actor_id" | "target_type" | "target_id";
 export type FilterField = ValueField | "date";
@@ -86,7 +89,9 @@ export function dateRange(chip: DateChip, now: Date = new Date()): { after: Date
     }
 }
 
-/** Query params for the portal list (and the facets range). */
+/** Query params for the list (and the facets range): `actions` (comma list),
+    `actor_name`, `actor_id`, `target_type`, `target_id`, `occurred_after`,
+    `occurred_before`. */
 export function chipsToParams(chips: Chip[], now: Date = new Date()): Record<string, string> {
     const out: Record<string, string> = {};
     const actions: string[] = [];
@@ -148,7 +153,7 @@ export type FacetValue = { value: string; label: string | null; count: number };
 
 /** Suggestions from the rows already loaded: the fallback when the API has no
     facets endpoint. Same shape and order (count, then value) as the server. */
-export function facetsFromEvents(events: AuditEvent[], field: ValueField, q: string, limit = 20): FacetValue[] {
+export function facetsFromEvents(events: FacetSourceEvent[], field: ValueField, q: string, limit = 20): FacetValue[] {
     const counts = new Map<string, FacetValue>();
     const bump = (value: string | undefined | null, label: string | null = null) => {
         if (!value) return;
